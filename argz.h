@@ -303,7 +303,7 @@ static void _argz_init_next(const char *option, const char *desc, void *addr, in
     }
     if (addr == NULL)
     {
-        fprintf(stderr, "ERROR: value address cannot be null\n");
+        fprintf(stderr, "ERROR: value address cannot be null for option '%s'\n", option);
         exit(1);
     }
     if (strlen(option) == 0)
