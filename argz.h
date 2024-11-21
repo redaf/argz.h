@@ -168,12 +168,17 @@ ARGZ_CDEF void argz_parse(int argc, const char *argv[])
     for (int c = 1; c < argc; c++)
     {
         const char *v = argv[c];
+        if (v == NULL)
+        {
+            printf("Error: argv[%d] is null\n", c);
+            exit(1);
+        }
         for (size_t z = 0; z < argz_count; z++)
         {
             const char *option = _argz_option_at(z, NULL);
             const int type = _argz_type_at(z, -1);
             void *value_addr = _argz_value_addr_at(z, NULL);
-            if (option == NULL)
+            if (option == NULL || value_addr == NULL)
             {
                 abort();
             }
@@ -207,7 +212,7 @@ ARGZ_CDEF void argz_options_print(void)
         size_t len = 0;
         if (option == NULL)
         {
-            continue;
+            abort();
         }
         len = strlen(option);
         if (len > opt_max_len)
@@ -221,9 +226,9 @@ ARGZ_CDEF void argz_options_print(void)
         const char *option = _argz_option_at(i, NULL);
         const char *desc = _argz_desc_at(i, NULL);
         int spaces = 0;
-        if (option == NULL || desc == NULL)
+        if (option == NULL)
         {
-            continue;
+            abort();
         }
         spaces = (int)(opt_max_len - strlen(option) + 1);
         printf("  %s %*s %s\n", option, spaces, "", (desc != NULL) ? desc : "?");
@@ -357,6 +362,10 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
 static size_t _argz_count(size_t inc)
 {
     static size_t count = 0;
+    if (count >= ARGZ_COUNT)
+    {
+        abort();
+    }
     count += inc;
     return count;
 }
