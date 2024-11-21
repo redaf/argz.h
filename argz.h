@@ -114,7 +114,7 @@ void copy(const char *input, const char *output, long size)
 
 #ifdef ARGZ_IMPLEMENTATION
 
-#include <stdio.h>  // printf
+#include <stdio.h>  // printf, fprintf
 #include <stdlib.h> // abort, exit, strtod, strtol
 #include <string.h> // strcmp, strlen
 
@@ -170,7 +170,7 @@ ARGZ_CDEF void argz_parse(int argc, const char *argv[])
         const char *v = argv[c];
         if (v == NULL)
         {
-            printf("Error: argv[%d] is null\n", c);
+            fprintf(stderr, "ERROR: argv[%d] is null\n", c);
             exit(1);
         }
         for (size_t z = 0; z < argz_count; z++)
@@ -298,23 +298,23 @@ static void _argz_init_next(const char *option, const char *desc, void *addr, in
     const char *opt = NULL;
     if (option == NULL)
     {
-        printf("ERROR: option cannot be null\n");
+        fprintf(stderr, "ERROR: option cannot be null\n");
         exit(1);
     }
     if (addr == NULL)
     {
-        printf("ERROR: value address cannot be null\n");
+        fprintf(stderr, "ERROR: value address cannot be null\n");
         exit(1);
     }
     if (strlen(option) == 0)
     {
-        printf("ERROR: option cannot be empty\n");
+        fprintf(stderr, "ERROR: option cannot be empty\n");
         exit(1);
     }
     opt = _argz_option_at(count, option);
     if (opt == NULL)
     {
-        printf("ERROR: ARGZ_COUNT=%lu exceeded, for option '%s'\n", count, option);
+        fprintf(stderr, "ERROR: ARGZ_COUNT=%lu exceeded, for option '%s'\n", count, option);
         exit(1);
     }
     // save
@@ -334,7 +334,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
         *((double *)value_addr) = strtod(argv, &endptr);
         if (endptr == argv)
         {
-            printf("ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "double", argv);
+            fprintf(stderr, "ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "double", argv);
             exit(1);
         }
     }
@@ -344,7 +344,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
         *((long *)value_addr) = strtol(argv, &endptr, 10);
         if (endptr == argv)
         {
-            printf("ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
+            fprintf(stderr, "ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
             exit(1);
         }
     }
@@ -354,7 +354,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
     }
     break;
     default:
-        printf("ERROR: type '%d' not supported\n", type);
+        fprintf(stderr, "ERROR: type '%d' not supported\n", type);
         exit(1);
     }
 }
