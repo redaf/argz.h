@@ -46,7 +46,8 @@ ARGZ_CDEC void argz_flg(const char *option, const char *desc, int *addr);
 //     const char *name = 0;
 //     argz_str("--name", "Say my name.", &name);
 // }
-ARGZ_CDEC void argz_str(const char *option, const char *desc, const char **addr);
+ARGZ_CDEC void argz_str(const char *option, const char *desc,
+                        const char **addr);
 
 // Parse arguments.
 // {
@@ -134,20 +135,22 @@ void copy(const char *input, const char *output, long size)
 #define ARGZ_KIND_STR 3
 
 // Print error and exit
-#define ARGZ_PANIC(...)                                                                                                \
-    do                                                                                                                 \
-    {                                                                                                                  \
-        (void)fprintf(stderr, "ERROR: ");                                                                              \
-        (void)fprintf(stderr, __VA_ARGS__);                                                                            \
-        exit(1);                                                                                                       \
+#define ARGZ_PANIC(...)                                                        \
+    do                                                                         \
+    {                                                                          \
+        (void)fprintf(stderr, "ERROR: ");                                      \
+        (void)fprintf(stderr, __VA_ARGS__);                                    \
+        exit(1);                                                               \
     } while (0)
 
 static const char *argz__option_at(size_t pos, const char *option);
 static const char *argz__desc_at(size_t pos, const char *desc);
 static void *argz__value_addr_at(size_t pos, void *addr);
 static int argz__type_at(size_t pos, int type);
-static void argz__init_next(const char *option, const char *desc, void *addr, int type);
-static void argz__parse_arg(void *value_addr, int type, const char *option, const char *argv);
+static void argz__init_next(const char *option, const char *desc, void *addr,
+                            int type);
+static void argz__parse_arg(void *value_addr, int type, const char *option,
+                            const char *argv);
 static size_t argz__count(size_t inc);
 
 ARGZ_CDEF void argz_dbl(const char *option, const char *desc, double *addr)
@@ -239,7 +242,8 @@ ARGZ_CDEF void argz_options_print(void)
             abort();
         }
         spaces = (int)(opt_max_len - strlen(option) + 1);
-        printf("  %s %*s %s\n", option, spaces, "", (desc != NULL) ? desc : "?");
+        printf("  %s %*s %s\n", option, spaces, "",
+               (desc != NULL) ? desc : "?");
     }
     printf("\n");
 }
@@ -300,7 +304,8 @@ static int argz__type_at(size_t pos, int type)
     return types[pos];
 }
 
-static void argz__init_next(const char *option, const char *desc, void *addr, int type)
+static void argz__init_next(const char *option, const char *desc, void *addr,
+                            int type)
 {
     const size_t count = argz__count(0);
     const char *opt = NULL;
@@ -329,7 +334,8 @@ static void argz__init_next(const char *option, const char *desc, void *addr, in
     (void)argz__count(1);
 }
 
-static void argz__parse_arg(void *value_addr, int type, const char *option, const char *argv)
+static void argz__parse_arg(void *value_addr, int type, const char *option,
+                            const char *argv)
 {
     switch (type)
     {
@@ -338,7 +344,8 @@ static void argz__parse_arg(void *value_addr, int type, const char *option, cons
         *((double *)value_addr) = strtod(argv, &endptr);
         if (endptr == argv)
         {
-            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "double", argv);
+            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n",
+                       option, "double", argv);
         }
     }
     break;
@@ -348,7 +355,8 @@ static void argz__parse_arg(void *value_addr, int type, const char *option, cons
         *((long *)value_addr) = strtol(argv, &endptr, BASE);
         if (endptr == argv)
         {
-            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
+            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n",
+                       option, "long", argv);
         }
     }
     break;
