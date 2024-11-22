@@ -16,10 +16,10 @@ void copy(const char *input, const char *output, long size);
 
 int main(int argc, const char *argv[]) {
 
-    const char *input = NULL;
+    const char *input  = NULL;
     const char *output = "output.txt";
-    long size = 128;
-    int help = 0;
+    long size          = 128;
+    int help           = 0;
 
     argz_str("-i",     "Input file path.",                        &input);
     argz_str("-o",     "Output file path (default: output.txt).", &output);
