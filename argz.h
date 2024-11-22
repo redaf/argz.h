@@ -128,87 +128,95 @@ void copy(const char *input, const char *output, long size)
 #define ARGZ_COUNT 8
 #endif // ARGZ_COUNT
 
-#define _ARGZ_DBL 0
-#define _ARGZ_FLG 1
-#define _ARGZ_LNG 2
-#define _ARGZ_STR 3
+#define ARGZ_KIND_DBL 0
+#define ARGZ_KIND_FLG 1
+#define ARGZ_KIND_LNG 2
+#define ARGZ_KIND_STR 3
 
-static const char *_argz_option_at(size_t pos, const char *option);
-static const char *_argz_desc_at(size_t pos, const char *desc);
-static void *_argz_value_addr_at(size_t pos, void *addr);
-static int _argz_type_at(size_t pos, int type);
-static void _argz_init_next(const char *option, const char *desc, void *addr, int type);
-static void _argz_parse_arg(void *value_addr, int type, const char *option, const char *argv);
-static size_t _argz_count(size_t inc);
+// Print error and exit
+#define ARGZ_PANIC(...)                                                                                                \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        (void)fprintf(stderr, "ERROR: ");                                                                              \
+        (void)fprintf(stderr, __VA_ARGS__);                                                                            \
+        exit(1);                                                                                                       \
+    } while (0)
+
+static const char *argz__option_at(size_t pos, const char *option);
+static const char *argz__desc_at(size_t pos, const char *desc);
+static void *argz__value_addr_at(size_t pos, void *addr);
+static int argz__type_at(size_t pos, int type);
+static void argz__init_next(const char *option, const char *desc, void *addr, int type);
+static void argz__parse_arg(void *value_addr, int type, const char *option, const char *argv);
+static size_t argz__count(size_t inc);
 
 ARGZ_CDEF void argz_dbl(const char *option, const char *desc, double *addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_DBL);
+    argz__init_next(option, desc, addr, ARGZ_KIND_DBL);
 }
 
 ARGZ_CDEF void argz_flg(const char *option, const char *desc, int *addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_FLG);
+    argz__init_next(option, desc, addr, ARGZ_KIND_FLG);
 }
 
 ARGZ_CDEF void argz_lng(const char *option, const char *desc, long *addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_LNG);
+    argz__init_next(option, desc, addr, ARGZ_KIND_LNG);
 }
 
 ARGZ_CDEF void argz_str(const char *option, const char *desc, const char **addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_STR);
+    argz__init_next(option, desc, (void *)addr, ARGZ_KIND_STR);
 }
 
 ARGZ_CDEF void argz_parse(int argc, const char *argv[])
 {
-    const size_t argz_count = _argz_count(0);
+    const size_t argz_count = argz__count(0);
     // ignore argv[0]
-    for (int c = 1; c < argc; c++)
+    for (int arg_c = 1; arg_c < argc; arg_c++)
     {
-        const char *v = argv[c];
-        if (v == NULL)
+        const char *arg_v = argv[arg_c];
+        if (arg_v == NULL)
         {
-            fprintf(stderr, "ERROR: argv[%d] is null\n", c);
-            exit(1);
+            ARGZ_PANIC("argv[%d] is null\n", arg_c);
         }
-        for (size_t z = 0; z < argz_count; z++)
+        for (size_t arg_z = 0; arg_z < argz_count; arg_z++)
         {
-            const char *option = _argz_option_at(z, NULL);
-            const int type = _argz_type_at(z, -1);
-            void *value_addr = _argz_value_addr_at(z, NULL);
+            const char *option = argz__option_at(arg_z, NULL);
+            const int type = argz__type_at(arg_z, -1);
+            void *value_addr = argz__value_addr_at(arg_z, NULL);
             if (option == NULL || value_addr == NULL)
             {
                 abort();
             }
-            if (strcmp(v, option))
+            if (strcmp(arg_v, option) != 0)
             {
                 // argv != option
                 continue;
             }
-            if (type == _ARGZ_FLG)
+            if (type == ARGZ_KIND_FLG)
             {
                 *((int *)value_addr) = 1;
                 break;
             }
-            c += 1;
-            if (c >= argc)
+            arg_c += 1;
+            if (arg_c >= argc)
             {
                 return;
             }
-            _argz_parse_arg(value_addr, type, option, argv[c]);
+            argz__parse_arg(value_addr, type, option, argv[arg_c]);
         }
     }
 }
 
 ARGZ_CDEF void argz_options_print(void)
 {
-    const size_t argz_count = _argz_count(0);
+    const size_t argz_count = argz__count(0);
     size_t opt_max_len = 0;
     for (size_t i = 0; i < argz_count; i++)
     {
-        const char *option = _argz_option_at(i, NULL);
+        const char *option = argz__option_at(i, NULL);
         size_t len = 0;
         if (option == NULL)
         {
@@ -223,8 +231,8 @@ ARGZ_CDEF void argz_options_print(void)
     printf("Options:\n");
     for (size_t i = 0; i < argz_count; i++)
     {
-        const char *option = _argz_option_at(i, NULL);
-        const char *desc = _argz_desc_at(i, NULL);
+        const char *option = argz__option_at(i, NULL);
+        const char *desc = argz__desc_at(i, NULL);
         int spaces = 0;
         if (option == NULL)
         {
@@ -236,7 +244,7 @@ ARGZ_CDEF void argz_options_print(void)
     printf("\n");
 }
 
-static const char *_argz_option_at(size_t pos, const char *option)
+static const char *argz__option_at(size_t pos, const char *option)
 {
     static const char *options[ARGZ_COUNT] = {0};
     if (pos >= ARGZ_COUNT)
@@ -250,7 +258,7 @@ static const char *_argz_option_at(size_t pos, const char *option)
     return options[pos];
 }
 
-static const char *_argz_desc_at(size_t pos, const char *desc)
+static const char *argz__desc_at(size_t pos, const char *desc)
 {
     static const char *descs[ARGZ_COUNT] = {0};
     if (pos >= ARGZ_COUNT)
@@ -264,7 +272,7 @@ static const char *_argz_desc_at(size_t pos, const char *desc)
     return descs[pos];
 }
 
-static void *_argz_value_addr_at(size_t pos, void *value_addr)
+static void *argz__value_addr_at(size_t pos, void *value_addr)
 {
     static void *value_addrs[ARGZ_COUNT] = {0};
     if (pos >= ARGZ_COUNT)
@@ -278,7 +286,7 @@ static void *_argz_value_addr_at(size_t pos, void *value_addr)
     return value_addrs[pos];
 }
 
-static int _argz_type_at(size_t pos, int type)
+static int argz__type_at(size_t pos, int type)
 {
     static int types[ARGZ_COUNT] = {0};
     if (pos >= ARGZ_COUNT)
@@ -292,74 +300,68 @@ static int _argz_type_at(size_t pos, int type)
     return types[pos];
 }
 
-static void _argz_init_next(const char *option, const char *desc, void *addr, int type)
+static void argz__init_next(const char *option, const char *desc, void *addr, int type)
 {
-    const size_t count = _argz_count(0);
+    const size_t count = argz__count(0);
     const char *opt = NULL;
     if (option == NULL)
     {
-        fprintf(stderr, "ERROR: option cannot be null\n");
-        exit(1);
+        ARGZ_PANIC("option cannot be null\n");
     }
     if (addr == NULL)
     {
-        fprintf(stderr, "ERROR: value address cannot be null for option '%s'\n", option);
-        exit(1);
+        ARGZ_PANIC("value address cannot be null for option '%s'\n", option);
     }
     if (strlen(option) == 0)
     {
-        fprintf(stderr, "ERROR: option cannot be empty\n");
-        exit(1);
+        ARGZ_PANIC("option cannot be empty\n");
     }
-    opt = _argz_option_at(count, option);
+    opt = argz__option_at(count, option);
     if (opt == NULL)
     {
-        fprintf(stderr, "ERROR: ARGZ_COUNT=%lu exceeded, for option '%s'\n", count, option);
-        exit(1);
+        ARGZ_PANIC("ARGZ_COUNT=%lu exceeded, for option '%s'\n", count, option);
     }
     // save
-    (void)_argz_desc_at(count, desc);
-    (void)_argz_value_addr_at(count, addr);
-    (void)_argz_type_at(count, type);
+    (void)argz__desc_at(count, desc);
+    (void)argz__value_addr_at(count, addr);
+    (void)argz__type_at(count, type);
     // increment arguments count
-    (void)_argz_count(1);
+    (void)argz__count(1);
 }
 
-static void _argz_parse_arg(void *value_addr, int type, const char *option, const char *argv)
+static void argz__parse_arg(void *value_addr, int type, const char *option, const char *argv)
 {
     switch (type)
     {
-    case _ARGZ_DBL: {
+    case ARGZ_KIND_DBL: {
         char *endptr = NULL;
         *((double *)value_addr) = strtod(argv, &endptr);
         if (endptr == argv)
         {
-            fprintf(stderr, "ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "double", argv);
-            exit(1);
+            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "double", argv);
         }
     }
     break;
-    case _ARGZ_LNG: {
+    case ARGZ_KIND_LNG: {
         char *endptr = NULL;
-        *((long *)value_addr) = strtol(argv, &endptr, 10);
+        const int BASE = 10;
+        *((long *)value_addr) = strtol(argv, &endptr, BASE);
         if (endptr == argv)
         {
-            fprintf(stderr, "ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
-            exit(1);
+            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
         }
     }
     break;
-    case _ARGZ_STR: {
+    case ARGZ_KIND_STR: {
         *((const char **)value_addr) = argv;
     }
     break;
     default:
-        fprintf(stderr, "ERROR: type '%d' not supported\n", type);
-        exit(1);
+        ARGZ_PANIC("type '%d' not supported\n", type);
     }
 }
 
-static size_t _argz_count(size_t inc)
+static size_t argz__count(size_t inc)
 {
     static size_t count = 0;
     if (count >= ARGZ_COUNT)
@@ -371,10 +373,10 @@ static size_t _argz_count(size_t inc)
 }
 
 #undef ARGZ_CDEF
-#undef _ARGZ_DBL
-#undef _ARGZ_FLG
-#undef _ARGZ_LNG
-#undef _ARGZ_STR
+#undef ARGZ_KIND_DBL
+#undef ARGZ_KIND_FLG
+#undef ARGZ_KIND_LNG
+#undef ARGZ_KIND_STR
 
 #endif // ARGZ_IMPLEMENTATION
 
