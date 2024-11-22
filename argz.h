@@ -128,10 +128,10 @@ void copy(const char *input, const char *output, long size)
 #define ARGZ_COUNT 8
 #endif // ARGZ_COUNT
 
-#define _ARGZ_DBL 0
-#define _ARGZ_FLG 1
-#define _ARGZ_LNG 2
-#define _ARGZ_STR 3
+#define ARGZ_KIND_DBL 0
+#define ARGZ_KIND_FLG 1
+#define ARGZ_KIND_LNG 2
+#define ARGZ_KIND_STR 3
 
 // Print error and exit
 #define ARGZ_PANIC(...)                                                                                                \
@@ -152,22 +152,22 @@ static size_t _argz_count(size_t inc);
 
 ARGZ_CDEF void argz_dbl(const char *option, const char *desc, double *addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_DBL);
+    _argz_init_next(option, desc, addr, ARGZ_KIND_DBL);
 }
 
 ARGZ_CDEF void argz_flg(const char *option, const char *desc, int *addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_FLG);
+    _argz_init_next(option, desc, addr, ARGZ_KIND_FLG);
 }
 
 ARGZ_CDEF void argz_lng(const char *option, const char *desc, long *addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_LNG);
+    _argz_init_next(option, desc, addr, ARGZ_KIND_LNG);
 }
 
 ARGZ_CDEF void argz_str(const char *option, const char *desc, const char **addr)
 {
-    _argz_init_next(option, desc, (void *)addr, _ARGZ_STR);
+    _argz_init_next(option, desc, (void *)addr, ARGZ_KIND_STR);
 }
 
 ARGZ_CDEF void argz_parse(int argc, const char *argv[])
@@ -195,7 +195,7 @@ ARGZ_CDEF void argz_parse(int argc, const char *argv[])
                 // argv != option
                 continue;
             }
-            if (type == _ARGZ_FLG)
+            if (type == ARGZ_KIND_FLG)
             {
                 *((int *)value_addr) = 1;
                 break;
@@ -333,7 +333,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
 {
     switch (type)
     {
-    case _ARGZ_DBL: {
+    case ARGZ_KIND_DBL: {
         char *endptr = NULL;
         *((double *)value_addr) = strtod(argv, &endptr);
         if (endptr == argv)
@@ -342,7 +342,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
         }
     }
     break;
-    case _ARGZ_LNG: {
+    case ARGZ_KIND_LNG: {
         char *endptr = NULL;
         *((long *)value_addr) = strtol(argv, &endptr, 10);
         if (endptr == argv)
@@ -351,7 +351,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
         }
     }
     break;
-    case _ARGZ_STR: {
+    case ARGZ_KIND_STR: {
         *((const char **)value_addr) = argv;
     }
     break;
@@ -372,10 +372,10 @@ static size_t _argz_count(size_t inc)
 }
 
 #undef ARGZ_CDEF
-#undef _ARGZ_DBL
-#undef _ARGZ_FLG
-#undef _ARGZ_LNG
-#undef _ARGZ_STR
+#undef ARGZ_KIND_DBL
+#undef ARGZ_KIND_FLG
+#undef ARGZ_KIND_LNG
+#undef ARGZ_KIND_STR
 
 #endif // ARGZ_IMPLEMENTATION
 
