@@ -174,23 +174,23 @@ ARGZ_CDEF void argz_parse(int argc, const char *argv[])
 {
     const size_t argz_count = argz__count(0);
     // ignore argv[0]
-    for (int c = 1; c < argc; c++)
+    for (int arg_c = 1; arg_c < argc; arg_c++)
     {
-        const char *v = argv[c];
-        if (v == NULL)
+        const char *arg_v = argv[arg_c];
+        if (arg_v == NULL)
         {
-            ARGZ_PANIC("argv[%d] is null\n", c);
+            ARGZ_PANIC("argv[%d] is null\n", arg_c);
         }
-        for (size_t z = 0; z < argz_count; z++)
+        for (size_t arg_z = 0; arg_z < argz_count; arg_z++)
         {
-            const char *option = argz__option_at(z, NULL);
-            const int type = argz__type_at(z, -1);
-            void *value_addr = argz__value_addr_at(z, NULL);
+            const char *option = argz__option_at(arg_z, NULL);
+            const int type = argz__type_at(arg_z, -1);
+            void *value_addr = argz__value_addr_at(arg_z, NULL);
             if (option == NULL || value_addr == NULL)
             {
                 abort();
             }
-            if (strcmp(v, option) != 0)
+            if (strcmp(arg_v, option) != 0)
             {
                 // argv != option
                 continue;
@@ -200,12 +200,12 @@ ARGZ_CDEF void argz_parse(int argc, const char *argv[])
                 *((int *)value_addr) = 1;
                 break;
             }
-            c += 1;
-            if (c >= argc)
+            arg_c += 1;
+            if (arg_c >= argc)
             {
                 return;
             }
-            argz__parse_arg(value_addr, type, option, argv[c]);
+            argz__parse_arg(value_addr, type, option, argv[arg_c]);
         }
     }
 }
@@ -344,7 +344,8 @@ static void argz__parse_arg(void *value_addr, int type, const char *option, cons
     break;
     case ARGZ_KIND_LNG: {
         char *endptr = NULL;
-        *((long *)value_addr) = strtol(argv, &endptr, 10);
+        const int BASE = 10;
+        *((long *)value_addr) = strtol(argv, &endptr, BASE);
         if (endptr == argv)
         {
             ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
