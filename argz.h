@@ -79,22 +79,21 @@ ARGZ_CDEC void argz_options_print(void);
 
 void copy(const char *input, const char *output, long size);
 
-int main(int argc, const char *argv[])
-{
-    const char *input = NULL;
-    const char *output = "output.txt";
-    long size = 128;
-    int help = 0;
+int main(int argc, const char *argv[]) {
 
-    argz_str("-i", "Input file path.", &input);
-    argz_str("-o", "Output file path (default: output.txt).", &output);
-    argz_lng("--size", "Buffer size in bytes.", &size);
-    argz_flg("-h", "Print this message and exit.", &help);
+    const char *input  = NULL;
+    const char *output = "output.txt";
+    long size          = 128;
+    int help           = 0;
+
+    argz_str("-i",     "Input file path.",                        &input);
+    argz_str("-o",     "Output file path (default: output.txt).", &output);
+    argz_lng("--size", "Buffer size in bytes.",                   &size);
+    argz_flg("-h",     "Print this message and exit.",            &help);
 
     argz_parse(argc, argv);
 
-    if (help)
-    {
+    if (help) {
         argz_options_print();
         return 0;
     }
@@ -102,10 +101,8 @@ int main(int argc, const char *argv[])
     copy(input, output, size);
 }
 
-void copy(const char *input, const char *output, long size)
-{
-    if (!input)
-    {
+void copy(const char *input, const char *output, long size) {
+    if (!input) {
         printf("Error: No input\n");
         return;
     }
