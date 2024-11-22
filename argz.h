@@ -133,6 +133,15 @@ void copy(const char *input, const char *output, long size)
 #define _ARGZ_LNG 2
 #define _ARGZ_STR 3
 
+// Print error and exit
+#define ARGZ_PANIC(...)                                                                                                \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        (void)fprintf(stderr, "ERROR: ");                                                                              \
+        (void)fprintf(stderr, __VA_ARGS__);                                                                            \
+        exit(1);                                                                                                       \
+    } while (0)
+
 static const char *_argz_option_at(size_t pos, const char *option);
 static const char *_argz_desc_at(size_t pos, const char *desc);
 static void *_argz_value_addr_at(size_t pos, void *addr);
@@ -158,7 +167,7 @@ ARGZ_CDEF void argz_lng(const char *option, const char *desc, long *addr)
 
 ARGZ_CDEF void argz_str(const char *option, const char *desc, const char **addr)
 {
-    _argz_init_next(option, desc, addr, _ARGZ_STR);
+    _argz_init_next(option, desc, (void *)addr, _ARGZ_STR);
 }
 
 ARGZ_CDEF void argz_parse(int argc, const char *argv[])
@@ -170,8 +179,7 @@ ARGZ_CDEF void argz_parse(int argc, const char *argv[])
         const char *v = argv[c];
         if (v == NULL)
         {
-            fprintf(stderr, "ERROR: argv[%d] is null\n", c);
-            exit(1);
+            ARGZ_PANIC("argv[%d] is null\n", c);
         }
         for (size_t z = 0; z < argz_count; z++)
         {
@@ -182,7 +190,7 @@ ARGZ_CDEF void argz_parse(int argc, const char *argv[])
             {
                 abort();
             }
-            if (strcmp(v, option))
+            if (strcmp(v, option) != 0)
             {
                 // argv != option
                 continue;
@@ -298,24 +306,20 @@ static void _argz_init_next(const char *option, const char *desc, void *addr, in
     const char *opt = NULL;
     if (option == NULL)
     {
-        fprintf(stderr, "ERROR: option cannot be null\n");
-        exit(1);
+        ARGZ_PANIC("option cannot be null\n");
     }
     if (addr == NULL)
     {
-        fprintf(stderr, "ERROR: value address cannot be null for option '%s'\n", option);
-        exit(1);
+        ARGZ_PANIC("value address cannot be null for option '%s'\n", option);
     }
     if (strlen(option) == 0)
     {
-        fprintf(stderr, "ERROR: option cannot be empty\n");
-        exit(1);
+        ARGZ_PANIC("option cannot be empty\n");
     }
     opt = _argz_option_at(count, option);
     if (opt == NULL)
     {
-        fprintf(stderr, "ERROR: ARGZ_COUNT=%lu exceeded, for option '%s'\n", count, option);
-        exit(1);
+        ARGZ_PANIC("ARGZ_COUNT=%lu exceeded, for option '%s'\n", count, option);
     }
     // save
     (void)_argz_desc_at(count, desc);
@@ -334,8 +338,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
         *((double *)value_addr) = strtod(argv, &endptr);
         if (endptr == argv)
         {
-            fprintf(stderr, "ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "double", argv);
-            exit(1);
+            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "double", argv);
         }
     }
     break;
@@ -344,8 +347,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
         *((long *)value_addr) = strtol(argv, &endptr, 10);
         if (endptr == argv)
         {
-            fprintf(stderr, "ERROR: Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
-            exit(1);
+            ARGZ_PANIC("Failed to parse option '%s'. Expected %s, got '%s'.\n", option, "long", argv);
         }
     }
     break;
@@ -354,8 +356,7 @@ static void _argz_parse_arg(void *value_addr, int type, const char *option, cons
     }
     break;
     default:
-        fprintf(stderr, "ERROR: type '%d' not supported\n", type);
-        exit(1);
+        ARGZ_PANIC("type '%d' not supported\n", type);
     }
 }
 
